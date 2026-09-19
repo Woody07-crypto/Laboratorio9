@@ -27,7 +27,7 @@ resource "time_sleep" "wait_for_iam_propagation" {
 }
  
 resource "aws_cloudwatch_log_group" "checkout_service" {
-  name          	= "/devsecops-lab/checkout-service"
+  name          	= "/devsecops-lab2/checkout-service"
   retention_in_days = 3
   depends_on    	= [time_sleep.wait_for_iam_propagation]
 }
