@@ -1,0 +1,25 @@
+{
+  "name": "laboratorio9",
+  "version": "1.0.0",
+  "description": "",
+  "main": "publish-order-event.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Woody07-crypto/Laboratorio9.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/Woody07-crypto/Laboratorio9/issues"
+  },
+  "homepage": "https://github.com/Woody07-crypto/Laboratorio9#readme",
+  "dependencies": {
+    "@aws-sdk/client-eventbridge": "^3.1141.0",
+    "@aws-sdk/client-sqs": "^3.1141.0"
+  }
+}
