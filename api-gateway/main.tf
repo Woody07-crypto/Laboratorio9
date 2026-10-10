@@ -135,3 +135,65 @@ resource "aws_lambda_function" "health" {
   filename         = data.archive_file.health_zip.output_path
   source_code_hash = data.archive_file.health_zip.output_base64sha256
 }
+
+# --- API Gateway (HTTP API) ---
+
+resource "aws_apigatewayv2_api" "orders_api" {
+  name          = "devsecops-lab-orders-api"
+  protocol_type = "HTTP"
+  depends_on    = [time_sleep.wait_for_iam_propagation]
+}
+
+# --- Integraciones con Lambda ---
+
+resource "aws_apigatewayv2_integration" "create_order_integration" {
+  api_id                 = aws_apigatewayv2_api.orders_api.id
+  integration_type       = "AWS_PROXY"
+  integration_uri        = aws_lambda_function.create_order.invoke_arn
+  payload_format_version = "2.0"
+}
+
+resource "aws_apigatewayv2_integration" "health_integration" {
+  api_id                 = aws_apigatewayv2_api.orders_api.id
+  integration_type       = "AWS_PROXY"
+  integration_uri        = aws_lambda_function.health.invoke_arn
+  payload_format_version = "2.0"
+}
+
+# --- Rutas ---
+
+resource "aws_apigatewayv2_route" "post_orders" {
+  api_id    = aws_apigatewayv2_api.orders_api.id
+  route_key = "POST /orders"
+  target    = "integrations/${aws_apigatewayv2_integration.create_order_integration.id}"
+}
+
+resource "aws_apigatewayv2_route" "get_health" {
+  api_id    = aws_apigatewayv2_api.orders_api.id
+  route_key = "GET /health"
+  target    = "integrations/${aws_apigatewayv2_integration.health_integration.id}"
+}
+
+resource "aws_apigatewayv2_stage" "default" {
+  api_id      = aws_apigatewayv2_api.orders_api.id
+  name        = "$default"
+  auto_deploy = true
+}
+
+# --- Permisos para que API Gateway invoque cada función ---
+
+resource "aws_lambda_permission" "apigw_invoke_create_order" {
+  statement_id  = "AllowAPIGatewayInvokeCreateOrder"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.create_order.function_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${aws_apigatewayv2_api.orders_api.execution_arn}/*/*"
+}
+
+resource "aws_lambda_permission" "apigw_invoke_health" {
+  statement_id  = "AllowAPIGatewayInvokeHealth"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.health.function_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${aws_apigatewayv2_api.orders_api.execution_arn}/*/*"
+}
