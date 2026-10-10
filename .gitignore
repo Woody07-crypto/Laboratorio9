@@ -13,3 +13,6 @@ override.tf.json
 .terraform.tfvars
 *.tfvars
 !*.tfvars.example
+
+# Paquetes de Lambda generados por Terraform
+api-gateway/*.zip
