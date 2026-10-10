@@ -9,3 +9,8 @@ output "notifications_queue_url" {
 output "inventory_queue_url" {
   value = aws_sqs_queue.inventory.id
 }
+
+output "api_endpoint" {
+  description = "URL base de la API HTTP"
+  value       = aws_apigatewayv2_api.orders_api.api_endpoint
+}

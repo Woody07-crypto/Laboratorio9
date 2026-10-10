@@ -1,41 +1,48 @@
-const { SQSClient, SendMessageCommand } = require('@aws-sdk/client-sqs');
+const { randomUUID } = require("node:crypto");
+const { SQSClient, SendMessageCommand } = require("@aws-sdk/client-sqs");
 
-const REGION = process.env.AWS_REGION || 'us-east-1';
-const QUEUE_URL = process.env.QUEUE_URL;
-const sqsClient = new SQSClient({ region: REGION });
+const sqsClient = new SQSClient({});
 
 exports.handler = async (event) => {
   let body;
   try {
-    body = JSON.parse(event.body || '{}');
-  } catch (err) {
+    body = JSON.parse(event.body || "{}");
+  } catch (error) {
     return {
       statusCode: 400,
-      body: JSON.stringify({ error: 'El cuerpo de la solicitud debe ser JSON válido' }),
+      body: JSON.stringify({ error: "El cuerpo de la solicitud debe ser JSON válido" }),
     };
   }
 
-  if (!body.productId || !body.amount) {
+  if (!body.productId || body.amount == null) {
     return {
       statusCode: 400,
-      body: JSON.stringify({ error: 'Se requieren los campos productId y amount' }),
+      body: JSON.stringify({ error: "Se requieren los campos productId y amount" }),
     };
   }
 
   const order = {
-    orderId: `API-${Date.now()}`,
+    orderId: `API-${randomUUID()}`,
     productId: body.productId,
     amount: body.amount,
   };
 
-  await sqsClient.send(new SendMessageCommand({
-    QueueUrl: QUEUE_URL,
-    MessageBody: JSON.stringify(order),
-  }));
+  try {
+    await sqsClient.send(new SendMessageCommand({
+      QueueUrl: process.env.QUEUE_URL,
+      MessageBody: JSON.stringify(order),
+    }));
+  } catch (error) {
+    console.error(error);
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ error: "No se pudo guardar la orden" }),
+    };
+  }
 
   return {
     statusCode: 201,
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ message: 'Orden recibida', order }),
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ message: "Orden recibida", order }),
   };
 };
